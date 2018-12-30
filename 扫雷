@@ -1,0 +1,176 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define ROW 9
+#define COL 9
+#define M_count 10
+
+int menu()    //搞一个菜单
+{
+	printf("***********************************\n");
+	printf("************1.开始游戏*************\n");
+	printf("************0.退出游戏*************\n");
+	printf("***********************************\n");
+	int choice = 0;
+	printf("请输入你的选择:");
+	scanf("%d",&choice);
+	return choice;
+}
+void init(char m_map[ROW + 2][COL + 2],char s_map[ROW + 2][COL + 2])
+{
+	for (int row = 0; row < ROW + 2; ++row)
+	{
+		for (int col = 0; col < COL + 2; ++col)
+		{
+			s_map[row][col] = '*';
+		}
+	}
+	for (int row = 0; row < ROW + 2; ++row)
+	{
+		for (int col = 0; col < COL + 2; ++col)
+		{
+			m_map[row][col] = '0';
+		}
+	}
+	//1.s_map  *
+	//2.m_map  先初始化为 '0'
+	//3.对m_map进行雷阵的布置
+    //布雷
+	int m_count = M_count;   //设置一个临时变量存储
+	while (m_count > 0)
+	{
+		//进行布置雷, 每布置一个, m_count--;
+		int row = rand() % ROW + 1;
+		int col = rand() % COL + 1;
+		if (m_map[row][col] == '1')
+		{
+			continue;
+		}
+		//当前位置可以设置;
+		m_map[row][col] = '1';
+		--m_count;
+	}
+}
+void display(char map[ROW + 2][COL + 2])
+{
+	//打印四个空格
+	printf(" ");  //左上角
+	//列坐标([1,COL])
+	printf("|");
+	for (int i = 1; i <= COL;++i)
+	{
+		printf("%d ", i);
+	}
+	//上边框
+	printf("\n");
+	for (int i = 0; i < COL;++i)
+	{
+		if (i == 0)
+		{
+			printf("-|");
+		}
+		printf("--");
+	}
+	printf("\n");
+
+	//打印每一行(带行号)
+	for (int row = 1; row <= ROW; ++row)
+	{
+		printf("%d|", row);
+		for (int col = 1; col <=COL;++col)
+		{
+			printf("%c ",map[row][col]);
+		}
+		printf("\n");
+	}
+}
+
+///row => [1,ROW]
+void updateshowmap(char m_map[ROW + 2][COL + 2],
+	char s_map[ROW + 2][COL + 2],int row, int col)
+{
+	//每次翻开一个,不是雷,就更新 s_map
+	//当前位置替换成一个数字(代表8个中有几个雷)
+	//row -1  不会越界   因为有边框
+	int m_count =
+		(m_map[row - 1][col - 1] - '0')
+		+ (m_map[row - 1][col] - '0')
+		+ (m_map[row - 1][col + 1] - '0')
+		+ (m_map[row][col - 1] - '0')
+		+ (m_map[row][col + 1] - '0')
+		+ (m_map[row + 1][col - 1] - '0')
+		+ (m_map[row + 1][col] - '0')
+		+ (m_map[row + 1][col + 1] - '0');
+
+	//由于 s_map 中都是字符 要转换
+	s_map[row][col] = m_count + '0';
+}
+void game()
+{
+	//1.设定一个二维数组,作为表示地雷的地图,0表示没有雷,1表示有雷
+	//  设定一个二维数组,作为给玩家看的地图,每个位置是否被掀开,如果翻开
+	//此处加了一圈边框,后面有解释
+	char m_map[ROW + 2][COL + 2];
+	char s_map[ROW + 2][COL + 2];
+	//2.对地图进行初始化(包含布置地雷的过程)
+	init(m_map,s_map);
+	int open_count = 0;
+	//先打印下初始地图
+	display(s_map);
+	while (1)
+	{
+		//3.提示玩家输入一组坐标,并且对玩家输入进行合法性检查(注意有效范围) (continue)
+		printf("输入坐标(row,col):");
+		int row = 0;
+		int col = 0;
+		scanf("%d %d",&row,&col);
+		//有效范围(判断是否在范围之中)
+		if (row < 1 || row > ROW || col < 1 || col > COL)
+		{
+			printf("你的坐标违法:\n");
+			continue;
+		}
+		//4.判定玩家翻开的位置是否是地雷,如果是,游戏结束,玩家失败;
+		if (m_map[row][col] == '1')
+		{
+			printf("您踩雷了,游戏结束!\n");
+			//告诉玩家哪些位置是雷;
+			display(m_map);
+			break;
+		}
+		//5.如果当前位置已经把最后一个不是雷的位置翻开了,游戏结束,玩家胜利
+		++open_count;
+		if (open_count == ROW*COL - M_count)
+		{
+			printf("成功\n");
+			display(m_map);
+			break;
+		}
+		//6.把这个位置翻开,并且计算当前位置周围的8个格子中包含几个雷
+		updateshowmap(m_map,s_map,row,col);
+		display(s_map);
+		// 回到3,循环执行
+	}
+}
+
+int main()
+{
+	srand((unsigned int)time(0));
+	while (1)
+	{
+		int choice = menu();
+		if (choice == 1)
+		{
+			game();
+		}
+		else
+		{
+			printf("byebye\n");
+			break;
+		}
+	}
+    system("pause");
+    return 0;
+}
