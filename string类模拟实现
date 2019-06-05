@@ -1,0 +1,400 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <iostream>
+#include <assert.h>
+using namespace std;
+
+class String
+{
+public:
+	//String() : _str(new char[1])
+	//{
+	//	*_str = '\0';
+	//}
+	typedef char* iterator;
+	typedef const char* const_iterator;
+
+	String(char * str = "")
+	{
+		size_t len = strlen(str);
+		_size = len;
+		_capacity = _size;
+		_str = new char[_capacity + 1];
+		strcpy(_str, str);
+	}
+
+	//深拷贝 : 
+	//浅拷贝 : 会导致同一份资源释放两次
+	//String(const String& s)
+	//	: _str(new char[strlen(s._str) + 1])
+	//{
+	//	strcpy(_str, s._str);
+	//}
+
+	//拷贝构造现代写法
+	String(const String& s)
+		: _str(nullptr)
+		, _size(0)
+		, _capacity(0)
+	{
+		//1. 调用构造函数创建临时对象, 开空间, 拷贝内容
+		String tmp(s._str);
+		//2. 临时对象交换内容, 当前对象管理新开辟的空间
+		Swap(tmp);
+		//3. 销毁临时对象, 调用析构函数, 释放当前对象管理的原有空间
+	}
+
+	//交换函数
+	void Swap(String& s)
+	{
+		swap(_str, s._str);
+		swap(_size, s._size);
+		swap(_capacity, s._capacity);
+	}
+	//插入元素
+	void pushback(const char c)
+	{
+		//判断容量
+		if (_size == _capacity)
+		{
+			//增容
+			size_t newc = _capacity == 0 ? 15 : 2 * _capacity;
+			Reserve(newc);
+		}
+		_str[_size++] = c;
+		_str[_size] = '\0';
+	}
+
+	//增容
+	void Reserve(size_t n)
+	{
+		if (n > _capacity)
+		{
+			char* tmp = new char[n + 1];///n + 1 因为\0也占一个字节
+			if (_str)
+			{
+				strcpy(tmp, _str);
+				delete[] _str;
+			}
+			_str = tmp;
+			_capacity = n;
+		}
+	}
+	//赋值预算符重载
+	//String& operator=(const String& s)
+	//{
+	//	if (this != &s)
+	//	{
+	//		if (_str)
+	//		{
+	//			delete[] _str;
+	//		}
+	//		_str = new char[strlen(s._str) + 1];
+	//		strcpy(_str, s._str);
+	//	}
+	//	return *this;
+	//}
+
+	//重置大小
+	void Resize(size_t n, char c = '\0')
+	{
+		if (n < _size)
+		{
+			_size = n;
+			_str[_size] = '\0';
+			return;
+		}
+		if (n > _capacity)
+		{
+			size_t newC = _capacity == 0 ? 15 : 2 * _capacity;
+			Reserve(newC);
+		}
+
+		//填充
+		for (int i = _size; i < n; i++)
+		{
+			_str[i] = c;
+		}
+		_size = n;
+		_str[_size] = '\0';
+	}
+	//字符插入
+	void Insert(size_t pos, const char c)
+	{
+		assert(pos <= _size);
+		//满了就增容
+		if (_size == _capacity)
+		{
+			size_t newC = _capacity == 0 ? 15 : 2 * _capacity;
+			Reserve(newC);
+		}
+		//元素移动, 从后向前挪
+		size_t end = _size;
+		while (end > pos)
+		{
+			_str[end] = _str[end - 1];
+			--end;
+		}
+		//插入
+		_str[pos] = c;
+		_str[++_size] = '\0';
+	}
+	//字符插入
+	void Insert(size_t pos, const char *str)
+	{
+		int len = strlen(str);
+		assert(pos <= _size);
+		//满了就增容
+		if (_size + len > _capacity)
+		{
+			Reserve(_size + len);
+		}
+		//元素移动
+		size_t end = _size + len;
+		while (end > pos + len - 1)
+		{
+			_str[end] = _str[end - len];
+			--end;
+		}
+		//插入字符串
+		//不能strcpy, 有\0, 所以只能走循环
+		while (*str)
+		{
+			_str[pos++] = *str;
+			++str;
+		}
+		_size += len;
+	}
+	//尾删
+	void pop_back()
+	{
+		if (_size > 0)
+		{
+			--_size;
+			_str[_size] = '\0';
+		}
+	}
+
+	//删除指定位置的元素
+	void Erase(size_t pos, size_t n)
+	{
+		//判断, _size位置本身没有元素
+		assert(pos < _size);
+		//从这个位置开始, 所有元素都被删了
+		if (n >= _size - pos)
+		{
+			_size = pos;
+			_str[_size] = '\0';
+		}
+		//元素移动
+		size_t begin = pos + n;
+		while (begin <= _size)
+		{
+			_str[pos++] = _str[begin];
+			++begin;
+		}
+		_size -= n;
+	}
+	void Append(const char* str)
+	{
+		size_t len = strlen(str);
+		if ((_size + len) > _capacity)
+		{
+			Reserve(_size + len);
+		}
+		strcpy(_str + _size, str);
+		_size += len;
+
+		//2.直接相当于尾插
+		//Insert(_size, str);
+	}
+
+	String& operator+=(char c)
+	{
+		//就是尾插
+		pushback(c);
+		return *this;
+	}
+	String& operator+=(const char* str)
+	{
+		Append(str);
+		return *this;
+	}
+	String& operator+=(const String& s)
+	{
+		//size_t len = s.Size();
+		//if ((_size + len) > _capacity)
+		//{
+		//	Reserve(_size + len);
+		//}
+		char* tmp = s.c_str();
+		Insert(_size, tmp);
+		return *this;
+	}
+
+	size_t find(size_t pos, char c)
+	{
+		for (int i = pos; i < _size; i++)
+		{
+			if (_str[i] == c)
+			{
+				return i;
+			}
+		}
+		return npos;
+	}
+	size_t find(size_t pos, const char* str)
+	{
+		char* ret = strstr(_str + pos, str);
+		if (pos != NULL)
+		{
+			return (ret - _str);
+		}
+		else
+		{
+			return npos;
+		}
+	}
+
+	char& operator[](size_t pos)
+	{
+		//遍历, []实现
+		assert(pos < _size);
+		return _str[pos];
+	}
+	const char& operator[](size_t pos) const
+	{
+		//遍历, []实现
+		assert(pos < _size);
+		return _str[pos];
+	}
+
+	//赋值预算符重载(现代写法)
+	String& operator=(String s)
+	{
+		//1. 传参, 调用拷贝构造, 开空间, 拷贝内容, 释放原有空间
+		//2. 与临时对象交换空间, 当前对象指向临时对象, 临时指向当前
+		//3. 临时对象生命周期结束, 编译器自动调用析构, 释放当前对象
+		Swap(s);
+		return *this;
+	}
+
+	size_t Size() const
+	{
+		return _size;
+	}
+	size_t _Capacity() const
+	{
+		return _capacity;
+	}
+
+	//迭代器
+	iterator begin()
+	{
+		return _str;
+	}
+	iterator end()
+	{
+		return _str + _size;
+	}
+
+	const iterator begin() const
+	{
+		return _str;
+	}
+	const iterator end() const
+	{
+		return _str + _size;
+	}
+
+	char* c_str()const
+	{
+		return _str;
+	}
+	~String()
+	{
+		if (_str)
+		{
+			delete[] _str;
+			_str = nullptr;
+			_size = _capacity = 0;
+		}
+	}
+	static size_t npos;
+private:
+	char * _str;
+	size_t _size;
+	size_t _capacity;
+};
+size_t String::npos = -1;
+
+String operator+(const String& s, char c)
+{
+	String ret = s;
+	ret += c;
+	return ret;
+}
+String operator+(const String& s, const String& s2)
+{
+	String ret = s;
+	ret += s2;
+	return ret;
+}
+String operator+(const String& s, const char* str)
+{
+	String ret = s;
+	ret += str;
+	return ret;
+}
+
+ostream& operator<<(ostream& _cout, const String& s)
+{
+	_cout << s.c_str() << endl;
+	return _cout;
+}
+
+
+void PrintString(const String& s)
+{
+	for (int i = 0; i < s.Size(); i++)
+	{
+		cout << s[i] << " ";
+	}
+	cout << endl;
+}
+
+void PrintStringIterator(const String& s)
+{
+	String::const_iterator sit = s.begin();
+	while (sit != s.end())
+	{
+		cout << *sit << " ";
+		++sit;
+	}
+	cout << endl;
+}
+
+void test()
+{
+	String s;
+	s.pushback('0');
+	s.pushback('1');
+	s.pushback('2');
+	s.pushback('3');
+	s.pushback('4');
+	s.pushback('5');
+	cout << s.c_str() << endl;
+
+	//for (int i = 0; i < s.Size(); i++)
+	//{
+	//	cout << s[i] << " ";
+	//	s.operator[](i);
+	//}
+	PrintStringIterator(s);
+}
+
+int main()
+{
+	test();
+	system("pause");
+	return 0;	
+}
