@@ -1,0 +1,293 @@
+#include <iostream>
+using namespace std;
+
+template <class T>
+struct BSTNode
+{
+	BSTNode<T>* _left;
+	BSTNode<T>* _right;
+	T _data;
+	BSTNode(const T& data = T())
+		:_left(nullptr)
+		, _right(nullptr)
+		, _data(data)
+	{}
+};
+
+template <class T>
+class BSTree
+{
+public:
+	typedef BSTNode<T> Node;
+	typedef Node* pNode;
+
+	BSTree()
+		: _root(nullptr)
+	{}
+
+	~BSTree()
+	{
+		_Destroy(_root);
+	}
+
+	BSTree(const BSTree<T>& bst)
+	{
+		_root = _Copy(bst._root);
+	}
+
+	pNode _Copy(const pNode root)
+	{
+		if (root == nullptr)
+			return root;
+		pNode newRoot = new Node(root->_data);
+		newRoot->_left = _Copy(root->_left);
+		newRoot->_right = _Copy(root->_right);
+		return newRoot;
+	}
+	
+	BSTree& operator=(const BSTree<T>& bst)
+	{
+		if (this != &bst)
+		{
+			if (_root)
+				_Destroy(_root);
+			_root = _Copy(bst._root);
+		}
+		return *this;
+	}
+
+	pNode Find(const T& data)
+	{
+		//先判断是否为空
+		if (_root == nullptr)
+		{
+			return nullptr;
+		}
+		//定义变量, 不要直接用_root
+		pNode cur = _root;
+		while (cur)
+		{
+			if (cur->_data == data)
+			{
+				return _root;
+			}
+			else if (cur->_data > data)
+			{
+				cur = cur->_left;
+			}
+			else
+			{
+				cur = cur->_right;
+			}
+		}
+		return nullptr;
+	}
+
+	bool Insert(const T& data)
+	{
+		if (_root == nullptr)
+		{
+			_root = new Node(data);
+			return true;
+		}
+		//有关系, 所以要用两个指针
+		pNode parent = nullptr;
+		pNode cur = _root;
+		//一直找到合适的位置
+		while (cur)
+		{
+			parent = cur;
+
+			if (cur->_data == data)
+			{
+				return false;
+			}
+			else if (cur->_data > data)
+			{
+				cur = cur->_left;
+			}
+			else
+			{
+				cur = cur->_right;
+			}
+		}
+
+		//插入新的节点
+		cur = new Node(data);
+		if (parent->_data > data)
+		{
+			parent->_left = cur;
+		}
+		else
+		{
+			parent->_right = cur;
+		}
+		return true;
+	}
+
+	bool Erase(const T& data)
+	{
+		// 如果树为空，删除失败
+		if (_root == nullptr)
+		{
+			return false;
+		}
+		// 查找在data在树中的位置
+		pNode cur = _root;
+		pNode parent = nullptr;
+		while (cur)
+		{
+			if (cur->_data == data)
+			{
+				break;
+			}
+			parent = cur;
+			if (cur->_data > data)
+			{
+				cur = cur->_left;
+			}
+			else
+			{
+				cur = cur->_right;
+			}
+		}
+		// data不在二叉搜索树中，无法删除
+		if (cur == nullptr)
+		{
+			return false;
+		}
+		//data在树中,分情况讨论
+		if (cur->_left == nullptr && cur->_right == nullptr)
+		{
+			//两个子树都为空
+			if (cur != _root)
+			{
+				if (parent->_left == cur)
+					parent->_left = nullptr;
+				else
+					parent->_right = nullptr;
+			}
+			else
+			{
+				_root = nullptr;
+			}
+			delete cur;
+			cur = nullptr;
+		}
+		else if (cur->_right == nullptr)
+		{
+			//右子树为空
+			if (cur != _root)
+			{
+				if (parent->_left == cur)
+				{
+					parent->_left = cur->_left;
+				}
+				else
+					parent->_right = cur->_left;
+			}
+			else
+			{
+				_root = cur->_left;
+			}
+			delete cur;
+			cur = nullptr;
+		}
+		else if (cur->_left == nullptr)
+		{
+			//左子树为空
+			if (cur != _root)
+			{
+				if (parent->_left == cur)
+				{
+					parent->_left = cur->_right;
+				}
+				else
+					parent->_right = cur->_right;
+			}
+			else
+				_root = cur->_right;
+
+			delete cur;
+			cur = nullptr;
+		}
+		else
+		{
+			//左右都不为空
+			pNode next = cur->_left;
+			parent = cur;
+			//找到左子树的最右节点
+			while (next->_right)
+			{
+				parent = next;
+				next = next->_right;
+			}
+			//交换值
+			cur->_data = next->_data;
+			//链接
+			if (parent->_left == next)
+				parent->_left = next->_left;
+			else
+				parent->_right = next->_left;
+			//删除cur
+			delete next;
+			next = nullptr;
+		}
+		return true;
+	}
+
+	void InOrder()
+	{
+		_InOrder(_root);
+		cout << endl;
+	}
+
+	void _InOrder(pNode root)
+	{
+		if (root == nullptr)
+			return;
+		_InOrder(root->_left);
+		cout << root->_data << " ";
+		_InOrder(root->_right);
+	}
+
+	void _Destroy(pNode& root)
+	{
+		if (root == nullptr)
+			return;
+		_Destroy(root->_left);
+		_Destroy(root->_right);
+		delete root;
+		root = nullptr;
+	}
+private:
+	pNode _root = nullptr;
+};
+
+void test()
+{
+	BSTree<int> bst;
+	bst.Insert(5);
+	bst.Insert(7);
+	bst.Insert(1);
+	bst.Insert(3);
+	bst.Insert(4);
+	bst.Insert(6);
+	bst.Insert(9);
+	bst.Insert(8);
+	bst.Insert(2);
+	bst.InOrder();
+	BSTree<int> bst2 = bst;
+	bst2.InOrder();
+	bst.Erase(3);
+	bst.Erase(4);
+	bst.InOrder();
+
+}
+
+int main()
+{
+	test();
+	system("pause");
+	return 0;	
+}
