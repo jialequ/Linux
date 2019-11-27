@@ -27,7 +27,7 @@ void Input(vector<Pcb>& pcb, int &n)
 	}
 }
 
-void FCFS_Swap(Pcb& a, Pcb& b)
+void Swap(Pcb& a, Pcb& b)
 {
 	swap(a.name, b.name);
 	swap(a.arr_time, b.arr_time);
@@ -42,18 +42,12 @@ void FCFS_BubbleSort(vector<Pcb>& pcb, int n)
 		{
 			if (pcb[j].arr_time < pcb[j - 1].arr_time)
 			{
-				FCFS_Swap(pcb[j], pcb[j - 1]);
+				Swap(pcb[j], pcb[j - 1]);
 			}
 		}
 	}
 }
 
-void SJF_Swap(Pcb& a, Pcb& b)
-{
-	swap(a.name, b.name);
-	swap(a.arr_time, b.arr_time);
-	swap(a.ser_time, b.ser_time);
-}
 
 void SJF_BubbleSort(vector<Pcb>& pcb, int n)
 {
@@ -63,17 +57,14 @@ void SJF_BubbleSort(vector<Pcb>& pcb, int n)
 		{
 			if (pcb[j].ser_time < pcb[j - 1].ser_time)
 			{
-				SJF_Swap(pcb[j], pcb[j - 1]);
+				Swap(pcb[j], pcb[j - 1]);
 			}
 		}
 	}
 }
 
-void FCFS(vector<Pcb>& pcb, int &n)
+void Cal(vector<Pcb>& pcb, int &n)
 {
-	Input(pcb, n);
-	FCFS_BubbleSort(pcb, n);
-
 	pcb[0].fin_time = pcb[0].ser_time;
 
 	for (int i = 1; i < n; ++i)
@@ -106,45 +97,4 @@ void FCFS(vector<Pcb>& pcb, int &n)
 	cout << endl;
 	cout << "平均周转时间 : " << avg_tur_sum << endl;
 	cout << "平均带权周转时间 : " << avg_b_tur_sum << endl;
-	cout << endl;
 }
-void SJF(vector<Pcb>& pcb, int n)
-{
-	//短作业优先, 按服务时间排序
-	Input(pcb, n);
-	SJF_BubbleSort(pcb, n);
-	pcb[0].fin_time = pcb[0].ser_time;
-
-	for (int i = 1; i < n; ++i)
-	{
-		pcb[i].fin_time = pcb[i].ser_time + pcb[i - 1].fin_time;
-	}
-
-	float tur_sum = 0.0;
-	for (int i = 0; i < n; ++i)
-	{
-		pcb[i].tur_time = pcb[i].fin_time - pcb[i].arr_time;
-		tur_sum += pcb[i].tur_time;
-	}
-
-	float b_tur_sum = 0.0;
-	for (int i = 0; i < n; ++i)
-	{
-		pcb[i].b_tur_time = pcb[i].tur_time / pcb[i].ser_time;
-		b_tur_sum += pcb[i].b_tur_time;
-	}
-
-	float avg_tur_sum = tur_sum / n;
-	float avg_b_tur_sum = b_tur_sum / n;
-	cout << endl;
-	cout << "id|   arr  |   ser  |   fin  |   tur  |  b_tur |" << endl;
-	for (int i = 0; i < n; ++i)
-	{
-		printf("%c | %6.2f | %6.2f | %6.2f | %6.2f | %6.2f | \n", pcb[i].name, pcb[i].arr_time, pcb[i].ser_time, pcb[i].fin_time, pcb[i].tur_time, pcb[i].b_tur_time);
-	}
-	cout << endl;
-	cout << "平均周转时间 : " << avg_tur_sum << endl;
-	cout << "平均带权周转时间 : " << avg_b_tur_sum << endl;
-	cout << endl;
-}
-

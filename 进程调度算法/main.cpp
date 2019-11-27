@@ -21,19 +21,33 @@ void start()
 		{
 			break;
 		}
-		else if (choose == 1)
+		else
 		{
-			//先来先服务算法
 			vector<Pcb> pcb(NUM);
 			int n = 0;
-			FCFS(pcb, n);
-		}
-		else if (choose == 2)
-		{
-			//短作业优先算法
-			vector<Pcb> pcb(NUM);
-			int n = 0;
-			SJF(pcb, n);
+			Input(pcb, n);
+			if (choose == 1)
+			{
+				//先来先服务算法
+				vector<Pcb> fpcb = pcb;
+				FCFS_BubbleSort(fpcb, n);
+				cout << endl;
+				cout << "-----------------------FCFS-----------------------" << endl;
+				Cal(fpcb, n);
+				cout << "--------------------------------------------------" << endl;
+				cout << endl;
+			}
+			else if (choose == 2)
+			{
+				//短作业优先算法
+				vector<Pcb> spcb = pcb;
+				SJF_BubbleSort(spcb, n);
+				cout << endl;
+				cout << "-----------------------SJF-----------------------" << endl;
+				Cal(spcb, n);
+				cout << "-------------------------------------------------" << endl;
+				cout << endl;
+			}
 		}
 	}
 }
