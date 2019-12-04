@@ -41,10 +41,10 @@ void start()
 				//时间片轮转算法
 				vector<Pcb> pcb;
 				int n = 0;
-				int q = 0;
+				int time = 0;
 				cout << "请输入时间片大小: ";
-				cin >> q;
-				RR(pcb, n);
+				cin >> time;
+				RR(pcb, n, time);
 			}
 		}
 	}

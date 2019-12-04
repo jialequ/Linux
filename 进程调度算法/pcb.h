@@ -78,17 +78,13 @@ void FCFS(vector<Pcb>& pcb, int &n)
 
 	float tur_sum = 0.0;
 	float b_tur_sum = 0.0;
-	//第一个进程先运行
-	pcb[0].fin_time = pcb[0].ser_time;
-	pcb[0].flag_run = true;
-	pcb[0].tur_time = pcb[0].fin_time - pcb[0].arr_time;
-	pcb[0].b_tur_time = pcb[0].tur_time / pcb[0].ser_time;
-	tur_sum += pcb[0].tur_time;
-	b_tur_sum += pcb[0].b_tur_time;
-	//计算后面每一个的
-	for (int i = 1; i < n; ++i)
+
+	for (int i = 0; i < n; ++i)
 	{
-		pcb[i].fin_time = pcb[i].ser_time + pcb[i - 1].fin_time;
+		if (i == 0)
+			pcb[0].fin_time = pcb[0].ser_time;
+		else
+			pcb[i].fin_time = pcb[i].ser_time + pcb[i - 1].fin_time;
 		pcb[i].tur_time = pcb[i].fin_time - pcb[i].arr_time;
 		tur_sum += pcb[i].tur_time;
 		pcb[i].b_tur_time = pcb[i].tur_time / pcb[i].ser_time;
@@ -110,6 +106,7 @@ void SJF(vector<Pcb>& pcb, int n)
 	float tur_sum = 0.0;
 	float b_tur_sum = 0.0;
 
+	//一次运行一个进程
 	//第一个进程一定先运行
 	pcb[0].fin_time = pcb[0].ser_time;
 	pcb[0].flag_run = true;
@@ -119,9 +116,11 @@ void SJF(vector<Pcb>& pcb, int n)
 	tur_sum += pcb[0].tur_time;
 	b_tur_sum += pcb[0].b_tur_time;
 
-	for (int i = 0; i < n - 1; ++i)
+	for (int i = 1; i < n; ++i)
 	{
+		flag_have = false;
 		//找出当前数组中还没有运行的第一个pcb
+		//不会存在全部运行过的情况, 因为上面的for循环是n - 1次, 所以肯定刚好把下标从1 ~ n - 1的访问完
 		int Min_ser = 0;
 		for (int index = 1; index < n; ++index)
 		{
@@ -131,9 +130,8 @@ void SJF(vector<Pcb>& pcb, int n)
 				break;
 			}
 		}
-		//找到之后, 从当前节点开始向后访问, 判断有没有到达时间小于Time的
+		//找到之后, 从第一个节点开始向后访问, 判断有没有到达时间小于Time的
 		//有 : 再找出服务时间最小的
-		//没有: 当前进程就是到达时间最小的, 直接运行它, Min_ser不用变
 		for (int j = 1; j < n; ++j)
 		{
 			if ((pcb[j].arr_time < Time) && (!pcb[j].flag_run))
@@ -144,9 +142,11 @@ void SJF(vector<Pcb>& pcb, int n)
 			}
 		}
 
-		//如果到达时间没有小于Time的,运行服务时间下一个的
+		//没有: 当前进程就是到达时间最小的, 直接运行它, Min_ser不用变
 		if (!flag_have)
-			Min_ser = i;
+		{
+			Time = pcb[Min_ser].arr_time;
+		}
 
 		//计算当前进程的各个时间
 		pcb[Min_ser].fin_time = Time + pcb[Min_ser].ser_time;
@@ -162,27 +162,27 @@ void SJF(vector<Pcb>& pcb, int n)
 	Output(pcb, n, tur_sum, b_tur_sum);
 }
 
-void RR(vector<Pcb>& pcb, int n)
+void RR(vector<Pcb>& pcb, int n, int time)
 {
 	//输入
 	Input(pcb, n);
 	//先按到达时间排序
 	Time_BubbleSort(pcb, n);
-	//第一个一定先运行
-
 	queue<Pcb> pq;
+
+	//第一个一定先运行
 	//先将pcb[0]push进去
 	pcb[0].flag_push = true;
 	pq.push(pcb[0]);
-
+	int q = time;//时间片
 	float Time = 0;//程序的运行时间
-	float q = 2;
 	bool flag_all = false;//是否全部入队
-	while (!pq.empty())
+	while ((!pq.empty()) || (!flag_all))
 	{
 		--q;
 		++Time;
 		//如果有进程到达, 入队
+		//如果已经全部入过队了, 就不用判断了, 省时间
 		if (!flag_all)
 		{
 			for (int i = 1; i < n; ++i)
@@ -191,51 +191,67 @@ void RR(vector<Pcb>& pcb, int n)
 				{
 					pcb[i].flag_push = true;
 					pq.push(pcb[i]);
+					if (pq.size() == n)
+						flag_all = true;
 					break;
 				}
-				if (pq.size() == n)
-					flag_all = true;
 			}
-		}
-
-		//自身的完成时间+1
-		++pq.front().run_time;
-		//如果运行完了
-		if (pq.front().run_time == pq.front().ser_time)
-		{
-			pq.front().fin_time = Time;
+			//判断是否所有的进程都进入了队列, 作用是当有一个进程执行完但是后面有进程没有到达时
+			//要一直++Time
 			for (int i = 0; i < n; ++i)
 			{
-				if (pcb[i].name == pq.front().name)
-				{
-					pcb[i] = pq.front();
-					break;
-				}
+				if (pcb[i].flag_push = false)
+					flag_all = false;
 			}
-			pq.pop();
-			q = 2;
 		}
-		else
+		
+		//队列不为空就去访问
+		//队列为空有两种情况:
+		//		1. 所有进程运行完了
+		//		2. 当前进程运行完了, 但是下一个没有到达, 这个不用管, 会继续while循环
+		if (!pq.empty())
 		{
-			//没有运行完
-			if (!pq.empty() && pq.size() > 1)
+			//自身的完成时间+1
+			++pq.front().run_time;
+			//如果运行完了, 队首出队, 换下一个运行 
+			if (pq.front().run_time == pq.front().ser_time)
 			{
-				if (q == 0)
+				pq.front().fin_time = Time;
+				for (int i = 0; i < n; ++i)
 				{
-					q = 2;
-					pq.push(pq.front());
-					pq.pop();
+					if (pcb[i].name == pq.front().name)
+					{
+						pcb[i] = pq.front();
+						break;
+					}
+				}
+				pq.pop();
+				q = time;
+			}
+			else
+			{
+				//没有运行完
+				//后面还有别的进程, 挂到队尾, 运行的下一个进程
+				if (!pq.empty() && pq.size() > 1)
+				{
+					if (q == 0)
+					{
+						q = time;
+						pq.push(pq.front());
+						pq.pop();
+					}
 				}
 			}
 		}
+		//一个进程运行完但是另一个没有进来, 时间片会轮完, 所以要更新
+		if (q == 0)
+			q = time;
 	}
 
-	pcb[0].tur_time = pcb[0].fin_time - pcb[0].arr_time;
-	pcb[0].b_tur_time = pcb[0].tur_time / pcb[0].ser_time;
-	float tur_sum = pcb[0].tur_time;
-	float b_tur_sum = pcb[0].b_tur_time;
-	//计算后面每一个的
-	for (int i = 1; i < n; ++i)
+	float tur_sum = 0;
+	float b_tur_sum = 0;
+	//计算后面每一个的各个时间
+	for (int i = 0; i < n; ++i)
 	{
 		pcb[i].tur_time = pcb[i].fin_time - pcb[i].arr_time;
 		tur_sum += pcb[i].tur_time;
