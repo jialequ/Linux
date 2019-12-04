@@ -1,5 +1,4 @@
 #include "pcb.h"
-const int NUM = 100;
 void menu()
 {
 	cout << "************进程调度算法**********" << endl;
@@ -23,30 +22,29 @@ void start()
 		}
 		else
 		{
-			vector<Pcb> pcb(NUM);
-			int n = 0;
-			Input(pcb, n);
 			if (choose == 1)
 			{
 				//先来先服务算法
-				vector<Pcb> fpcb = pcb;
-				FCFS_BubbleSort(fpcb, n);
-				cout << endl;
-				cout << "-----------------------FCFS-----------------------" << endl;
-				Cal(fpcb, n);
-				cout << "--------------------------------------------------" << endl;
-				cout << endl;
+				vector<Pcb> pcb;
+				int n = 0;
+				FCFS(pcb, n);
 			}
 			else if (choose == 2)
 			{
 				//短作业优先算法
-				vector<Pcb> spcb = pcb;
-				SJF_BubbleSort(spcb, n);
-				cout << endl;
-				cout << "-----------------------SJF-----------------------" << endl;
-				Cal(spcb, n);
-				cout << "-------------------------------------------------" << endl;
-				cout << endl;
+				vector<Pcb> pcb;
+				int n = 0;
+				SJF(pcb, n);
+			}
+			else if (choose == 3)
+			{
+				//时间片轮转算法
+				vector<Pcb> pcb;
+				int n = 0;
+				int q = 0;
+				cout << "请输入时间片大小: ";
+				cin >> q;
+				RR(pcb, n);
 			}
 		}
 	}
