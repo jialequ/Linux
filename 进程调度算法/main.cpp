@@ -20,32 +20,33 @@ void start()
 		{
 			break;
 		}
+		else if (choose == 1)
+		{
+			//先来先服务算法
+			vector<Pcb> pcb;
+			int n = 0;
+			FCFS(pcb, n);
+		}
+		else if (choose == 2)
+		{
+			//短作业优先算法
+			vector<Pcb> pcb;
+			int n = 0;
+			SJF(pcb, n);
+		}
+		else if (choose == 3)
+		{
+			//时间片轮转算法
+			vector<Pcb> pcb;
+			int n = 0;
+			int time = 0;
+			cout << "请输入时间片大小: ";
+			cin >> time;
+			RR(pcb, n, time);
+		}
 		else
 		{
-			if (choose == 1)
-			{
-				//先来先服务算法
-				vector<Pcb> pcb;
-				int n = 0;
-				FCFS(pcb, n);
-			}
-			else if (choose == 2)
-			{
-				//短作业优先算法
-				vector<Pcb> pcb;
-				int n = 0;
-				SJF(pcb, n);
-			}
-			else if (choose == 3)
-			{
-				//时间片轮转算法
-				vector<Pcb> pcb;
-				int n = 0;
-				int time = 0;
-				cout << "请输入时间片大小: ";
-				cin >> time;
-				RR(pcb, n, time);
-			}
+			cout << "-_-输入错误, 请重新输入-_- " << endl;
 		}
 	}
 }
@@ -56,3 +57,5 @@ int main()
 	system("pause");
 	return 0;
 }
+
+int a;

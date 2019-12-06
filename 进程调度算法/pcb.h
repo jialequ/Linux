@@ -49,25 +49,14 @@ void Output(vector<Pcb>& pcb, int n, float tur_sum, float b_tur_sum)
 	cout << endl;
 }
 
-void Swap(Pcb& a, Pcb& b)
+bool ForArr(Pcb& a, Pcb& b)
 {
-	swap(a.name, b.name);
-	swap(a.arr_time, b.arr_time);
-	swap(a.ser_time, b.ser_time);
+	return a.arr_time < b.arr_time;
 }
 
 void Time_BubbleSort(vector<Pcb>& pcb, int n)
 {
-	for (int i = 0; i < n; ++i)
-	{
-		for (int j = 1; j < n - i; ++j)
-		{
-			if (pcb[j].arr_time < pcb[j - 1].arr_time)
-			{
-				Swap(pcb[j], pcb[j - 1]);
-			}
-		}
-	}
+	sort(pcb.begin(), pcb.end(), ForArr);
 }
 
 //先来先服务
@@ -78,13 +67,25 @@ void FCFS(vector<Pcb>& pcb, int &n)
 
 	float tur_sum = 0.0;
 	float b_tur_sum = 0.0;
-
+	float Time = 0;//运行总时间
 	for (int i = 0; i < n; ++i)
 	{
 		if (i == 0)
+		{
 			pcb[0].fin_time = pcb[0].ser_time;
+			Time = pcb[0].fin_time;
+		}
 		else
-			pcb[i].fin_time = pcb[i].ser_time + pcb[i - 1].fin_time;
+		{
+			if (pcb[i].arr_time > Time)
+			{
+				//如果前一个进程运行完成下一个进程没有到达	
+				Time = pcb[i].arr_time;
+			}
+			pcb[i].fin_time = pcb[i].ser_time + Time;
+			//更新一下程序运行的总时间
+			Time = pcb[i].fin_time;
+		}
 		pcb[i].tur_time = pcb[i].fin_time - pcb[i].arr_time;
 		tur_sum += pcb[i].tur_time;
 		pcb[i].b_tur_time = pcb[i].tur_time / pcb[i].ser_time;
